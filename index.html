@@ -4,47 +4,99 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Peta OpenLayers dengan Lokasi & Popup</title>
+    
+    <!-- OpenLayers CSS -->
     <link rel="stylesheet" href="https://unpkg.com/ol/ol.css">
     <script src="https://unpkg.com/ol/dist/ol.js"></script>
+
+    <!-- Custom CSS -->
     <style>
+        /* Reset styling */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background: #f4f4f4;
+            color: #333;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        h2 {
+            margin: 15px 0;
+            font-size: 24px;
+            color: #2c3e50;
+        }
+
+        /* Container peta fullscreen */
         #map {
             width: 100%;
-            height: 500px;
+            height: calc(100vh - 50px); /* Menggunakan hampir seluruh layar */
+            border-top: 3px solid #2c3e50;
         }
+
+        /* Popup styling */
         .ol-popup {
             position: absolute;
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px;
+            border-radius: 8px;
             border: 1px solid #ccc;
-            bottom: 12px;
-            left: -50px;
-            min-width: 180px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.15);
+            min-width: 220px;
+            text-align: left;
             font-size: 14px;
-            box-shadow: 0px 0px 5px rgba(0,0,0,0.2);
         }
+
         .ol-popup:after {
             content: "";
             position: absolute;
-            bottom: -10px;
+            bottom: -12px;
             left: 50%;
             margin-left: -10px;
-            border-width: 10px;
+            border-width: 12px;
             border-style: solid;
             border-color: white transparent transparent transparent;
         }
+
         .ol-popup-closer {
             position: absolute;
-            top: 2px;
-            right: 8px;
-            cursor: pointer;
+            top: 5px;
+            right: 10px;
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
             font-size: 16px;
+        }
+
+        .ol-popup-closer:hover {
+            color: #e74c3c;
+        }
+
+        /* Footer kecil */
+        footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            font-size: 14px;
+            padding: 8px 0;
         }
     </style>
 </head>
 <body>
 
-<h2>Peta dengan Lokasi Pengguna & Popup</h2>
+<h2>🌍 Peta Interaktif dengan Lokasi Anda</h2>
+
+<!-- Container untuk peta fullscreen -->
 <div id="map"></div>
 
 <!-- Popup untuk menampilkan detail lokasi -->
@@ -52,6 +104,8 @@
     <a href="#" id="popup-closer" class="ol-popup-closer">×</a>
     <div id="popup-content"></div>
 </div>
+
+<footer>📌 Dibuat dengan OpenLayers</footer>
 
 <script>
     // Inisialisasi peta
@@ -93,7 +147,7 @@
         element: popupContainer,
         positioning: 'bottom-center',
         stopEvent: false,
-        offset: [0, -10]
+        offset: [0, -12]
     });
     map.addOverlay(overlay);
 
