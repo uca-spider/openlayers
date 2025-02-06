@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peta OpenLayers dengan Lokasi & Popup</title>
+    <link rel="stylesheet" href="https://unpkg.com/ol/ol.css">
+    <script src="https://unpkg.com/ol/dist/ol.js"></script>
+    <style>
+        #map {
+            width: 100%;
+            height: 500px;
+        }
+        .ol-popup {
+            position: absolute;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            bottom: 12px;
+            left: -50px;
+            min-width: 180px;
+            font-size: 14px;
+            box-shadow: 0px 0px 5px rgba(0,0,0,0.2);
+        }
+        .ol-popup:after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            margin-left: -10px;
+            border-width: 10px;
+            border-style: solid;
+            border-color: white transparent transparent transparent;
+        }
+        .ol-popup-closer {
+            position: absolute;
+            top: 2px;
+            right: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Peta dengan Lokasi Pengguna & Popup</h2>
+<div id="map"></div>
+
+<!-- Popup untuk menampilkan detail lokasi -->
+<div id="popup" class="ol-popup">
+    <a href="#" id="popup-closer" class="ol-popup-closer">×</a>
+    <div id="popup-content"></div>
+</div>
+
+<script>
+    // Inisialisasi peta
+    const map = new ol.Map({
+        target: 'map',
+        layers: [
+            new ol.layer.Tile({
+                source: new ol.source.OSM()
+            })
+        ],
+        view: new ol.View({
+            center: ol.proj.fromLonLat([113.9213, -0.7893]), // Default ke Indonesia
+            zoom: 5
+        })
+    });
+
+    // Layer untuk lokasi pengguna
+    const userLocationLayer = new ol.layer.Vector({
+        source: new ol.source.Vector()
+    });
+    map.addLayer(userLocationLayer);
+
+    // Ikon marker lokasi pengguna
+    const userIconStyle = new ol.style.Style({
+        image: new ol.style.Icon({
+            anchor: [0.5, 1],
+            src: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', // Ikon lokasi
+            scale: 0.1
+        })
+    });
+
+    // Element popup
+    const popupContainer = document.getElementById('popup');
+    const popupContent = document.getElementById('popup-content');
+    const popupCloser = document.getElementById('popup-closer');
+
+    // Overlay untuk popup
+    const overlay = new ol.Overlay({
+        element: popupContainer,
+        positioning: 'bottom-center',
+        stopEvent: false,
+        offset: [0, -10]
+    });
+    map.addOverlay(overlay);
+
+    // Tutup popup saat tombol "×" diklik
+    popupCloser.onclick = function () {
+        overlay.setPosition(undefined);
+        popupCloser.blur();
+        return false;
+    };
+
+    // Fungsi untuk menampilkan popup di lokasi pengguna
+    function showPopup(coords, lon, lat) {
+        const date = new Date();
+        const formattedTime = date.toLocaleTimeString();
+
+        popupContent.innerHTML = `
+            <strong>📍 Lokasi Anda</strong><br>
+            <b>Latitude:</b> ${lat.toFixed(6)}<br>
+            <b>Longitude:</b> ${lon.toFixed(6)}<br>
+            <b>Waktu:</b> ${formattedTime}
+        `;
+        overlay.setPosition(coords);
+    }
+
+    // Fungsi untuk memperbarui lokasi pengguna
+    function updateUserLocation(lon, lat) {
+        console.log(`📍 Lokasi Asli: Latitude ${lat}, Longitude ${lon}`);
+
+        // Konversi koordinat ke EPSG:3857
+        const projectedCoords = ol.proj.fromLonLat([lon, lat]);
+        console.log(`📍 Koordinat setelah konversi: ${projectedCoords}`);
+
+        // Buat marker baru
+        const userPoint = new ol.Feature({
+            geometry: new ol.geom.Point(projectedCoords)
+        });
+        userPoint.setStyle(userIconStyle);
+
+        // Hapus marker lama dan tambahkan yang baru
+        userLocationLayer.getSource().clear();
+        userLocationLayer.getSource().addFeature(userPoint);
+
+        // Perbarui tampilan peta ke lokasi pengguna
+        map.getView().setCenter(projectedCoords);
+        map.getView().setZoom(15);
+
+        // Tampilkan popup dengan detail lokasi
+        showPopup(projectedCoords, lon, lat);
+    }
+
+    // Fungsi untuk mendapatkan lokasi awal pengguna
+    function getInitialLocation() {
+        if ('geolocation' in navigator) {
+            navigator.geolocation.getCurrentPosition((position) => {
+                updateUserLocation(position.coords.longitude, position.coords.latitude);
+            }, (error) => {
+                console.error("❌ Gagal mendapatkan lokasi awal:", error);
+                alert("Tidak dapat mengakses lokasi. Pastikan izin lokasi diaktifkan.");
+            }, {
+                enableHighAccuracy: true
+            });
+        } else {
+            alert("Geolocation tidak didukung di browser ini.");
+        }
+    }
+
+    // Fungsi untuk memantau perubahan lokasi pengguna secara real-time
+    function trackUserLocation() {
+        if ('geolocation' in navigator) {
+            navigator.geolocation.watchPosition((position) => {
+                updateUserLocation(position.coords.longitude, position.coords.latitude);
+            }, (error) => {
+                console.error("❌ Gagal memperbarui lokasi:", error);
+            }, {
+                enableHighAccuracy: true
+            });
+        }
+    }
+
+    // Jalankan fungsi untuk mendapatkan lokasi awal dan melacak lokasi real-time
+    getInitialLocation();
+    trackUserLocation();
+</script>
+
+</body>
+</html>
